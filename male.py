@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 def get_important_neurons(how_much_highest, 
@@ -63,3 +64,51 @@ def get_positions(per_layer_results, per_layer_activations):
             print(per_layer_results[ln][unit_id])
             plt.colorbar(plt.imshow(thresh, cmap='jet'))
             plt.show()
+    return per_layer_positions
+            
+def _get_activation(model, layer, input_tensor):
+    activations = []
+
+    def hook(module, input, output):
+        activations.append(output)
+
+    handle = layer.register_forward_hook(hook)
+    model(input_tensor)
+    handle.remove()
+
+    return activations[0]
+
+
+from typing import List
+def associate_channels(input_batch: torch.Tensor, 
+                       prev_layer: torch.nn.modules.Conv2d, 
+                       prev_out_channels: int,
+                       curr_layer: torch.nn.modules.Conv2d, 
+                       target_ch_id: int, 
+                       model) -> List[int]:
+    with torch.no_grad():
+        # Get activations of both layers given an input_batch
+        activations_curr = _get_activation(model, curr_layer, input_batch)
+        activations_curr = activations_curr[:,target_ch_id,:,:]
+        activations_prev = _get_activation(model, prev_layer, input_batch)
+        
+        # Initialize empty placeholder for contributions
+        contributions = torch.empty(size=(prev_out_channels,), 
+                                    device=input_batch.device)
+        
+        # Iterate through the channels in the prev_layer
+        for ch_id in range(prev_out_channels):
+            # Zero out one channel in prev_layer activation tensor
+            zeroed_activations_prev = activations_prev.clone()
+            zeroed_activations_prev[:,ch_id,:,:] = 0.
+                    
+            # Compute activation of curr_layer given zeroed out prev_layer
+            from_zeroed_activations_curr = curr_layer.forward(zeroed_activations_prev)
+            from_zeroed_activations_curr = from_zeroed_activations_curr[:,target_ch_id,:,:]
+            
+            # Compute the channel score by computing the absolute value of
+            # difference between the original output and zeroed out output
+            diff = torch.abs(activations_curr - from_zeroed_activations_curr)
+            contributions[ch_id] = torch.sum(diff)
+        
+    return contributions
