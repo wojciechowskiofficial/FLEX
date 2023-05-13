@@ -33,14 +33,14 @@ def classify(filename: str, model, top_k=5) -> Tensor:
     top_prob, top_catid = torch.topk(probabilities, top_k)
     return probabilities, top_prob, categories[top_catid], input_batch, input_tensor
 
-def wikipedify():
+def wikipedify(category):
     import wikipediaapi
 
     wiki = wikipediaapi.Wikipedia('en')
     mapping = {'lakeside' : 'lake'}
-    if categories[top5_catid[0]] not in mapping.keys():
-        page = wiki.page(categories[top5_catid[0]])
+    if category not in mapping.keys():
+        page = wiki.page(category)
     else:
-        page = wiki.page(mapping[categories[top5_catid[0]]])
+        page = wiki.page(mapping[category])
     wiki_text = page.text
     return wiki_text
