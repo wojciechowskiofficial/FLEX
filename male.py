@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def get_important_neurons(how_much_highest, 
                           input_batch, 
                           model, 
@@ -32,3 +35,31 @@ def get_important_neurons(how_much_highest,
             per_layer_activations[layer_name][r['unit']] = viz
     
     return per_layer_results, per_layer_activations
+
+
+def _get_position(lv, rv, th, bh, thresh):
+    positions = list()
+    if np.sum(thresh[:,:lv]) > 0: positions.append('left')
+    if np.sum(thresh[:,rv:]) > 0: positions.append('right')
+    if np.sum(thresh[:th,:]) > 0: positions.append('top')
+    if np.sum(thresh[bh:,:]) > 0: positions.append('bottom')
+    if np.sum(thresh[th:bh,lv:rv]) > 0: positions.append('center')
+    return positions
+
+def get_positions(per_layer_results, per_layer_activations):
+    import cv2
+    from copy import deepcopy
+    from matplotlib import pyplot as plt
+    per_layer_results = deepcopy(per_layer_results)
+    per_layer_positions = deepcopy(per_layer_activations)
+    for ln in per_layer_results.keys():
+        for unit_id, words in per_layer_results[ln].items():
+            fm = per_layer_activations[ln][unit_id]
+            _, thresh = cv2.threshold(fm, np.max(fm) * .5, np.max(fm), 0)
+            thresh = cv2.normalize(thresh, None, 0, 1., cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            lv, rv = thresh.shape[0] // 3, thresh.shape[0] // 3 * 2
+            th, bh = lv, rv
+            per_layer_positions[ln][unit_id] = _get_position(lv, rv, th, bh, thresh)
+            print(per_layer_results[ln][unit_id])
+            plt.colorbar(plt.imshow(thresh, cmap='jet'))
+            plt.show()
