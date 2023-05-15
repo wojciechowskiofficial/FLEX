@@ -47,7 +47,7 @@ def _get_position(lv, rv, th, bh, thresh):
     if np.sum(thresh[th:bh,lv:rv]) > 0: positions.append('center')
     return positions
 
-def get_positions(per_layer_results, per_layer_activations):
+def get_positions(per_layer_results, per_layer_activations, viz=False):
     import cv2
     from copy import deepcopy
     from matplotlib import pyplot as plt
@@ -61,9 +61,10 @@ def get_positions(per_layer_results, per_layer_activations):
             lv, rv = thresh.shape[0] // 3, thresh.shape[0] // 3 * 2
             th, bh = lv, rv
             per_layer_positions[ln][unit_id] = _get_position(lv, rv, th, bh, thresh)
-            print(per_layer_results[ln][unit_id])
-            plt.colorbar(plt.imshow(thresh, cmap='jet'))
-            plt.show()
+            if viz:
+                print(per_layer_results[ln][unit_id])
+                plt.colorbar(plt.imshow(thresh, cmap='jet'))
+                plt.show()
     return per_layer_positions
             
 def _get_activation(model, layer, input_tensor):
