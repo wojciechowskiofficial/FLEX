@@ -21,7 +21,6 @@ def get_important_neurons(how_much_highest,
         attribution_lrp = LayerLRP(model, layer_map[layer_name]).attribute(input_batch, argmax(probabilities))
         attribution_lrp.detach_()
         attribution_lrp = relu(attribution_lrp)
-        #input_batch.detach()
 
         sorted_ids = argsort(amax(attribution_lrp, dim=(2, 3)), descending=True).squeeze_(0)
         query = descriptions[descriptions['layer'] == layer_name]
@@ -62,7 +61,6 @@ def get_positions(per_layer_results, per_layer_activations, viz=False):
             th, bh = lv, rv
             per_layer_positions[ln][unit_id] = _get_position(lv, rv, th, bh, thresh)
             if viz:
-                print(per_layer_results[ln][unit_id])
                 plt.colorbar(plt.imshow(thresh, cmap='jet'))
                 plt.show()
     return per_layer_positions

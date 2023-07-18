@@ -8,7 +8,7 @@ def classify(filename: str, model, top_k=5) -> Tensor:
     import torch
     import numpy as np
     
-    input_image = Image.open(os.path.join('images', 'random', filename))
+    input_image = Image.open(filename)
     preprocess = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
