@@ -12,6 +12,7 @@ def classify(filename: str, model, top_k=5) -> Tensor:
     preprocess = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
+        transforms.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),  # Conversion to 3 channels
         transforms.ToTensor(),
         #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
