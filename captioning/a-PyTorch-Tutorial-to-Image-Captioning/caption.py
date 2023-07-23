@@ -148,7 +148,8 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
     return seq, alphas
 
 
-def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
+def visualize_att(image_path, seq, alphas, rev_word_map, 
+                  viz_output_dir: str, exp_output_dir: str, smooth=True):
     """
     Visualizes caption with weights at every word.
 
@@ -164,6 +165,8 @@ def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
     image = image.resize([14 * 24, 14 * 24], Image.LANCZOS)
 
     words = [rev_word_map[ind] for ind in seq]
+    with open(exp_output_dir, "w") as f:
+        f.write(" ".join(words))
 
     for t in range(len(words)):
         if t > 50:
@@ -183,7 +186,7 @@ def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
             plt.imshow(alpha, alpha=0.8)
         plt.set_cmap(cm.Greys_r)
         plt.axis('off')
-    plt.savefig('test.jpg')
+    plt.savefig(viz_output_dir + ".jpg")
 
 
 if __name__ == '__main__':
