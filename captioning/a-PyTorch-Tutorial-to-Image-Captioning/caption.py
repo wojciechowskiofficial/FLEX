@@ -165,8 +165,7 @@ def visualize_att(image_path, seq, alphas, rev_word_map,
     image = image.resize([14 * 24, 14 * 24], Image.LANCZOS)
 
     words = [rev_word_map[ind] for ind in seq]
-    with open(exp_output_dir, "w") as f:
-        f.write(" ".join(words))
+    explanation = " ".join(words)
 
     for t in range(len(words)):
         if t > 50:
@@ -186,7 +185,8 @@ def visualize_att(image_path, seq, alphas, rev_word_map,
             plt.imshow(alpha, alpha=0.8)
         plt.set_cmap(cm.Greys_r)
         plt.axis('off')
-    plt.savefig(viz_output_dir + ".jpg")
+    figure = plt.gcf()
+    return explanation, figure
 
 
 if __name__ == '__main__':
