@@ -148,8 +148,7 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
     return seq, alphas
 
 
-def visualize_att(image_path, seq, alphas, rev_word_map, 
-                  viz_output_dir: str, exp_output_dir: str, smooth=True):
+def visualize_att(image_path, seq, alphas, rev_word_map, smooth=True):
     """
     Visualizes caption with weights at every word.
 
