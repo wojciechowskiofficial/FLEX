@@ -1,5 +1,12 @@
 import numpy as np
 import torch
+from torch import argmax, argsort, relu, amax
+import pandas as pd
+from captum.attr import LayerLRP, LayerActivation
+from copy import deepcopy
+from typing import List, Dict, Tuple
+import os
+import openai
 
 
 def get_important_neurons(how_much_highest, 
@@ -9,10 +16,7 @@ def get_important_neurons(how_much_highest,
                           layer_map, 
                           descriptions, 
                           probabilities):
-    
-    from captum.attr import LayerLRP, LayerActivation
-    from torch import argmax, argsort, relu, amax
-    from copy import deepcopy
+
     
     per_layer_results = {layer_name : dict() for layer_name in layer_names}
     per_layer_activations = deepcopy(per_layer_results)
@@ -78,7 +82,6 @@ def _get_activation(model, layer, input_tensor):
     return activations[0]
 
 
-from typing import List
 def associate_channels(input_batch: torch.Tensor, 
                        prev_layer: torch.nn.modules.Conv2d, 
                        prev_out_channels: int,
@@ -111,3 +114,73 @@ def associate_channels(input_batch: torch.Tensor,
             contributions[ch_id] = torch.sum(diff)
         
     return contributions
+
+
+def run_pipeline_single_decision(model: torch.nn.Module, 
+                                 full_image_path: str, 
+                                 layer_name: str,
+                                 layer_map: Dict[str, torch.nn.Module], 
+                                 nuron_descriptions_full_path: str, 
+                                 api_token_full_path: str, 
+                                 prompt_dir_path: str = "./prompots",
+                                 top_neuron_count: int = 10, 
+                                 gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
+    
+
+    # Check if the CNN is in the eval mode
+    if model.training:
+        _ = model.eval()
+        
+    # Classify
+    from utils import classify
+    probabilities, top_probabilities, categories, input_batch, input_tensor = classify(full_image_path, 
+                                                                                       model)
+
+    # Resize and center the image
+    image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))
+    
+    # Find most important neurons 
+    descriptions = pd.read_csv(nuron_descriptions_full_path)
+    per_layer_results, per_layer_activations = get_important_neurons(how_much_highest=top_neuron_count, 
+                                                                    input_batch=input_batch, 
+                                                                    model=model, 
+                                                                    layer_names=[layer_name], 
+                                                                    layer_map=layer_map, 
+                                                                    descriptions=descriptions, 
+                                                                    probabilities=probabilities)
+    
+    # Find neuron spatial whereabouts
+    per_layer_positions = get_positions(per_layer_results, 
+                                        per_layer_activations, 
+                                        viz=False)
+
+    # Construct the prompt
+    prompt = str(categories[0]) + ', '
+    tmp = []
+    positions = per_layer_positions[layer_name]
+    results = per_layer_results[layer_name]
+    for k, v in positions.items():
+        tmp.append({'description' : results[k], 'positions' : [], 'id' : k})
+        if len(v) <= 3:
+            tmp[-1]['positions'] = v
+    prompt += str(tmp)
+    with open(api_token_full_path, 'r') as f:
+        token = f.readline().strip()
+    with open(os.path.join(prompt_dir_path, 'full_prompt.txt'), 'r') as f:
+        whole_prompt = f.readlines()
+    whole_prompt = ''.join(whole_prompt)
+    full_prompt = whole_prompt + 'PROMPT: "' + prompt + '"'
+    
+    # Run GPT API
+    API_KEY = token
+    openai.api_key = API_KEY
+    response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+            {"role": "user", "content": full_prompt},
+        ], 
+    temperature=gpt_temp
+    )
+    explanation = response["choices"][0]["message"]["content"]
+    
+    return probabilities.numpy(), prompt, explanation
