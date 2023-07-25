@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import List, Dict, Tuple
 import os
 import openai
+from utils import classify
 
 
 def get_important_neurons(how_much_highest, 
@@ -132,8 +133,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
         _ = model.eval()
         
     # Classify
-    from utils import classify
-    probabilities, top_probabilities, categories, input_batch, input_tensor = classify(full_image_path, 
+    probabilities, _, categories, input_batch, input_tensor = classify(full_image_path, 
                                                                                        model)
 
     # Resize and center the image
