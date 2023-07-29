@@ -1,0 +1,10 @@
+name,score,grade-level
+flesch-kincaid,27.7607786089543,28
+flesch,12.001255801523484,['college_graduate']
+gunning-fog,28.9837678592532,college_graduate
+coleman_liau,10.180133864781531,10
+dalle-chall,12.580263855895069,['college_graduate']
+ARI,33.651028166549764,['college_graduate']
+linesear-write,38.64540816326531,39
+smog,16.404322709996244,16
+spache,13.802788774282366,14
