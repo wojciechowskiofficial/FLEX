@@ -121,9 +121,9 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  full_image_path: str, 
                                  layer_name: str,
                                  layer_map: Dict[str, torch.nn.Module], 
-                                 nuron_descriptions_full_path: str, 
+                                 neuron_descriptions_full_path: str, 
                                  api_token_full_path: str, 
-                                 prompt_dir_path: str = "./prompots",
+                                 prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
     
@@ -131,16 +131,16 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     # Check if the CNN is in the eval mode
     if model.training:
         _ = model.eval()
-        
+
     # Classify
     probabilities, _, categories, input_batch, input_tensor = classify(full_image_path, 
                                                                                        model)
 
     # Resize and center the image
     image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))
-    
+
     # Find most important neurons 
-    descriptions = pd.read_csv(nuron_descriptions_full_path)
+    descriptions = pd.read_csv(neuron_descriptions_full_path)
     per_layer_results, per_layer_activations = get_important_neurons(how_much_highest=top_neuron_count, 
                                                                     input_batch=input_batch, 
                                                                     model=model, 
@@ -148,14 +148,14 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                                                     layer_map=layer_map, 
                                                                     descriptions=descriptions, 
                                                                     probabilities=probabilities)
-    
+
     # Find neuron spatial whereabouts
     per_layer_positions = get_positions(per_layer_results, 
                                         per_layer_activations, 
                                         viz=False)
 
     # Construct the prompt
-    prompt = str(categories[0]) + ', '
+    prompt = f'{str(categories[0])}, '
     tmp = []
     positions = per_layer_positions[layer_name]
     results = per_layer_results[layer_name]
@@ -169,8 +169,8 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     with open(os.path.join(prompt_dir_path, 'full_prompt.txt'), 'r') as f:
         whole_prompt = f.readlines()
     whole_prompt = ''.join(whole_prompt)
-    full_prompt = whole_prompt + 'PROMPT: "' + prompt + '"'
-    
+    full_prompt = f'{whole_prompt}PROMPT: "{prompt}"'
+
     # Run GPT API
     API_KEY = token
     openai.api_key = API_KEY
@@ -182,5 +182,5 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     temperature=gpt_temp
     )
     explanation = response["choices"][0]["message"]["content"]
-    
+
     return probabilities.numpy(), prompt, explanation
