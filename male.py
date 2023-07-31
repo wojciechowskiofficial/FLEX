@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 import torch
 from torch import argmax, argsort, relu, amax
@@ -42,14 +43,31 @@ def get_important_neurons(how_much_highest,
     return per_layer_results, per_layer_activations
 
 
-def _get_position(lv, rv, th, bh, thresh):
-    positions = list()
-    if np.sum(thresh[:,:lv]) > 0: positions.append('left')
-    if np.sum(thresh[:,rv:]) > 0: positions.append('right')
-    if np.sum(thresh[:th,:]) > 0: positions.append('top')
-    if np.sum(thresh[bh:,:]) > 0: positions.append('bottom')
-    if np.sum(thresh[th:bh,lv:rv]) > 0: positions.append('center')
-    return positions
+def _get_position(matrix):
+    # Detect active subsquares 
+    active_squares = []
+    rows, cols = matrix.shape
+    sub_rows, sub_cols = rows // 3, cols // 3
+
+    for i, j in product(range(3), range(3)):
+        start_row, end_row = i*sub_rows, (i+1)*sub_rows if i != 2 else rows
+        start_col, end_col = j*sub_cols, (j+1)*sub_cols if j != 2 else cols
+        square = matrix[start_row:end_row, start_col:end_col]
+        if np.any(square == 1):
+            active_squares.append(i*3 + j)
+            
+    # Map to NL
+    mapping = {0 : "top-left corner", 
+               1 : "top", 
+               2 : "top-right corner", 
+               3 : "left", 
+               4 : "center", 
+               5 : "right", 
+               6 : "bottom-left corner", 
+               7 : "bottom", 
+               8 : "bottom-right corner"}
+
+    return [mapping[el] for el in active_squares]
 
 def get_positions(per_layer_results, per_layer_activations, viz=False):
     import cv2
@@ -62,9 +80,7 @@ def get_positions(per_layer_results, per_layer_activations, viz=False):
             fm = per_layer_activations[ln][unit_id]
             _, thresh = cv2.threshold(fm, np.max(fm) * .5, np.max(fm), 0)
             thresh = cv2.normalize(thresh, None, 0, 1., cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-            lv, rv = thresh.shape[0] // 3, thresh.shape[0] // 3 * 2
-            th, bh = lv, rv
-            per_layer_positions[ln][unit_id] = _get_position(lv, rv, th, bh, thresh)
+            per_layer_positions[ln][unit_id] = _get_position(thresh)
             if viz:
                 plt.colorbar(plt.imshow(thresh, cmap='jet'))
                 plt.show()
@@ -156,14 +172,12 @@ def run_pipeline_single_decision(model: torch.nn.Module,
 
     # Construct the prompt
     prompt = f'{str(categories[0])}, '
-    tmp = []
+    desc_and_pos = []
     positions = per_layer_positions[layer_name]
     results = per_layer_results[layer_name]
     for k, v in positions.items():
-        tmp.append({'description' : results[k], 'positions' : [], 'id' : k})
-        if len(v) <= 3:
-            tmp[-1]['positions'] = v
-    prompt += str(tmp)
+        desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
+    prompt += str(desc_and_pos)
     with open(api_token_full_path, 'r') as f:
         token = f.readline().strip()
     with open(os.path.join(prompt_dir_path, 'full_prompt.txt'), 'r') as f:
