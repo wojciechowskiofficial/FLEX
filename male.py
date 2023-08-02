@@ -139,6 +139,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  layer_map: Dict[str, torch.nn.Module], 
                                  neuron_descriptions_full_path: str, 
                                  api_token_full_path: str, 
+                                 explanation_type: str,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
@@ -178,10 +179,18 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     for k, v in positions.items():
         desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
     prompt += str(desc_and_pos)
+    
     with open(api_token_full_path, 'r') as f:
         token = f.readline().strip()
-    with open(os.path.join(prompt_dir_path, 'full_prompt.txt'), 'r') as f:
+    if explanation_type == "rigid":
+        prompt_file = "rigid_prompt.txt"
+    elif explanation_type == "soft":
+        prompt_file = "soft_prompt.txt"
+    else:
+        raise ValueError("Wrong prompt type!")
+    with open(os.path.join(prompt_dir_path, prompt_file), 'r') as f:
         whole_prompt = f.readlines()
+        
     whole_prompt = ''.join(whole_prompt)
     full_prompt = f'{whole_prompt}PROMPT: "{prompt}"'
 

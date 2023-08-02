@@ -12,6 +12,7 @@ OPENAI_API_TOKEN_FULL_PATH = "/home/adamwsl/.gpt_api_token/token.txt"
 CNN = "resnet18"
 DATASET = "imagenet"
 OUTPUT_PARENT_PATH = "./basic_explanations"
+EXPLANATION_TYPE = "soft"
 
 
 def Main():
@@ -51,7 +52,8 @@ def Main():
                                                                           layer_name=last_layer_name, 
                                                                           layer_map=layer_map, 
                                                                           neuron_descriptions_full_path=MILAN_DESCRIPTIONS_FULL_PATH, 
-                                                                          api_token_full_path=OPENAI_API_TOKEN_FULL_PATH)
+                                                                          api_token_full_path=OPENAI_API_TOKEN_FULL_PATH, 
+                                                                          explanation_type=EXPLANATION_TYPE)
         if not os.path.exists(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5])): # [:-5] is for getting rid of ".JPEG"
             os.makedirs(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5]))
         save(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], "probs.npy"), probabilities)
