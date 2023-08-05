@@ -202,13 +202,20 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     # Run GPT API
     API_KEY = token
     openai.api_key = API_KEY
-    response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-            {"role": "user", "content": full_prompt},
-        ], 
-    temperature=gpt_temp
-    )
+    
+    while True:
+        try:
+            response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                    {"role": "user", "content": full_prompt},
+                ], 
+            temperature=gpt_temp
+            )
+            break
+        except openai.error.Timeout as e:
+            print("Caught an openai.error.Timeout exception! Reattempting API call.")
+            print(str(e))
     explanation = response["choices"][0]["message"]["content"]
 
     return probabilities.numpy(), prompt, explanation
