@@ -8,7 +8,7 @@ from copy import deepcopy
 from typing import List, Dict, Tuple
 import os
 import openai
-from utils import classify
+from utils import *
 
 
 def get_important_neurons(how_much_highest, 
@@ -66,8 +66,10 @@ def _get_position(matrix):
                6 : "bottom-left corner", 
                7 : "bottom", 
                8 : "bottom-right corner"}
+    primary_positions = [mapping[el] for el in active_squares]
+    agg_pos, prim_pos = aggregate_areas(primary_positions)
 
-    return [mapping[el] for el in active_squares]
+    return agg_pos + prim_pos
 
 def get_positions(per_layer_results, per_layer_activations, viz=False):
     import cv2
@@ -177,7 +179,12 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     positions = per_layer_positions[layer_name]
     results = per_layer_results[layer_name]
     for k, v in positions.items():
-        desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
+        if explanation_type == 'rigid':
+            desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
+        elif explanation_type == "soft":
+            desc_and_pos.append({'description' : results[k], 'positions' : v})
+        else:
+            raise ValueError("Wrong prompt type!")
     prompt += str(desc_and_pos)
     
     with open(api_token_full_path, 'r') as f:
@@ -186,8 +193,6 @@ def run_pipeline_single_decision(model: torch.nn.Module,
         prompt_file = "rigid_prompt.txt"
     elif explanation_type == "soft":
         prompt_file = "soft_prompt.txt"
-    else:
-        raise ValueError("Wrong prompt type!")
     with open(os.path.join(prompt_dir_path, prompt_file), 'r') as f:
         whole_prompt = f.readlines()
         

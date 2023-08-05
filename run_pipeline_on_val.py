@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 from numpy import save
+from shutil import copy2
 
 
 VAL_SET_PARENT_PATH = "./val"
@@ -12,7 +13,8 @@ OPENAI_API_TOKEN_FULL_PATH = "/home/adamwsl/.gpt_api_token/token.txt"
 CNN = "resnet18"
 DATASET = "imagenet"
 OUTPUT_PARENT_PATH = "./basic_explanations"
-EXPLANATION_TYPE = "soft"
+EXPLANATION_TYPE = "rigid"
+COPY_IMAGE = True
 
 
 def Main():
@@ -59,8 +61,14 @@ def Main():
         save(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], "probs.npy"), probabilities)
         with open(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], "prompt.txt"), "w") as f:
             f.write(prompt)
-        with open(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], "explanation.txt"), "w") as f:
+        if EXPLANATION_TYPE == "rigid":
+            explanation_file_name = "rigid_explanation.txt"
+        elif EXPLANATION_TYPE == "soft":
+            explanation_file_name = "soft_explanation.txt"
+        with open(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], explanation_file_name), "w") as f:
             f.write(explanation)
+        if COPY_IMAGE and not os.path.isfile(os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], image_name)):
+            copy2(full_image_path, os.path.join(OUTPUT_PARENT_PATH, DATASET, CNN, image_name[:-5], image_name))
 
 
 if __name__ == "__main__":
