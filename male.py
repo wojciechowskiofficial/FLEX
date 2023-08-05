@@ -20,7 +20,7 @@ def get_important_neurons(how_much_highest,
                           probabilities):
 
     
-    per_layer_results = {layer_name : dict() for layer_name in layer_names}
+    per_layer_results = {layer_name: {} for layer_name in layer_names}
     per_layer_activations = deepcopy(per_layer_results)
 
     for layer_name in layer_names:
@@ -31,7 +31,7 @@ def get_important_neurons(how_much_highest,
         sorted_ids = argsort(amax(attribution_lrp, dim=(2, 3)), descending=True).squeeze_(0)
         query = descriptions[descriptions['layer'] == layer_name]
         highest_activations_query = query.iloc[sorted_ids][:how_much_highest]    
-        
+
         attribution_activations = LayerActivation(model, layer_map[layer_name]).attribute(input_batch)
 
         for _, r in highest_activations_query.iterrows():
@@ -39,7 +39,7 @@ def get_important_neurons(how_much_highest,
             viz = attribution_activations[0, r['unit'], ...].numpy()
             per_layer_results[layer_name][r['unit']] = name
             per_layer_activations[layer_name][r['unit']] = viz
-    
+
     return per_layer_results, per_layer_activations
 
 
@@ -145,6 +145,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
+    # sourcery skip: remove-str-from-print, switch
     
 
     # Check if the CNN is in the eval mode
