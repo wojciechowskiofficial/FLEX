@@ -1,4 +1,4 @@
-from male import run_pipeline_single_decision
+from src.male import run_pipeline_single_decision
 import os
 import pandas as pd
 from tqdm import tqdm
@@ -7,14 +7,15 @@ from shutil import copy2
 
 
 VAL_SET_PARENT_PATH = "./val"
-VAL_IMAGES_NAMES_FULL_PATH = "./val_paths_experiments_0.csv" # filtered by class
+VAL_IMAGES_NAMES_FULL_PATH = "./metadata/val_paths_experiments_0.csv" # filtered by class
 MILAN_DESCRIPTIONS_FULL_PATH = "./milan_results/resnet18_imagenet.csv"
 OPENAI_API_TOKEN_FULL_PATH = "/home/adamwsl/.gpt_api_token/token.txt"
 CNN = "resnet18"
 DATASET = "imagenet"
-OUTPUT_PARENT_PATH = "./basic_explanations"
-EXPLANATION_TYPE = "rigid"
+OUTPUT_PARENT_PATH = "./basic_explanationsxxx"
+EXPLANATION_TYPE = "soft"
 COPY_IMAGE = True
+DATASET_CLASS_NAMES = "./metadata/imagenet_classes.txt"
 
 
 def Main():
@@ -53,6 +54,7 @@ def Main():
                                                                           full_image_path=full_image_path, 
                                                                           layer_name=last_layer_name, 
                                                                           layer_map=layer_map, 
+                                                                          dataset_class_names=DATASET_CLASS_NAMES,
                                                                           neuron_descriptions_full_path=MILAN_DESCRIPTIONS_FULL_PATH, 
                                                                           api_token_full_path=OPENAI_API_TOKEN_FULL_PATH, 
                                                                           explanation_type=EXPLANATION_TYPE)

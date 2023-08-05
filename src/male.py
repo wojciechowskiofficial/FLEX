@@ -8,7 +8,9 @@ from copy import deepcopy
 from typing import List, Dict, Tuple
 import os
 import openai
-from utils import *
+from src.utils import *
+from warnings import filterwarnings # for captum
+filterwarnings("ignore")
 
 
 def get_important_neurons(how_much_highest, 
@@ -142,6 +144,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  neuron_descriptions_full_path: str, 
                                  api_token_full_path: str, 
                                  explanation_type: str,
+                                 dataset_class_names: str,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
@@ -153,8 +156,9 @@ def run_pipeline_single_decision(model: torch.nn.Module,
         _ = model.eval()
 
     # Classify
-    probabilities, _, categories, input_batch, input_tensor = classify(full_image_path, 
-                                                                                       model)
+    probabilities, _, categories, input_batch, input_tensor = classify(filename=full_image_path, 
+                                                                       model=model, 
+                                                                       dataset_class_names=dataset_class_names)
 
     # Resize and center the image
     image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))

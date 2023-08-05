@@ -1,6 +1,9 @@
 from torch import Tensor
 
-def classify(filename: str, model, top_k=5) -> Tensor:
+def classify(filename: str, 
+             model, 
+             dataset_class_names: str,
+             top_k=5,) -> Tensor:
     
     from PIL import Image
     from torchvision import transforms
@@ -28,13 +31,14 @@ def classify(filename: str, model, top_k=5) -> Tensor:
         output = model(input_batch)
     probabilities = torch.nn.functional.softmax(output[0], dim=0)
     # Read the categories
-    with open('imagenet_classes.txt', 'r') as f:
+    with open(dataset_class_names, 'r') as f:
         categories = np.asarray([s.strip() for s in f.readlines()])
     # Show top categories per image
     top_prob, top_catid = torch.topk(probabilities, top_k)
     return probabilities, top_prob, categories[top_catid], input_batch, input_tensor
 
 def wikipedify(category):
+    # sourcery skip: remove-dict-keys, swap-if-else-branches
     import wikipediaapi
 
     wiki = wikipediaapi.Wikipedia('en')
@@ -43,8 +47,7 @@ def wikipedify(category):
         page = wiki.page(category)
     else:
         page = wiki.page(mapping[category])
-    wiki_text = page.text
-    return wiki_text
+    return page.text
 
 def aggregate_areas(positions):
     all_positions = ["top-left corner", "top", "top-right corner", 
