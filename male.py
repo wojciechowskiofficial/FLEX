@@ -8,7 +8,7 @@ from copy import deepcopy
 from typing import List, Dict, Tuple
 import os
 import openai
-from utils import classify
+from utils import *
 
 
 def get_important_neurons(how_much_highest, 
@@ -66,8 +66,10 @@ def _get_position(matrix):
                6 : "bottom-left corner", 
                7 : "bottom", 
                8 : "bottom-right corner"}
+    primary_positions = [mapping[el] for el in active_squares]
+    agg_pos, prim_pos = aggregate_areas(primary_positions)
 
-    return [mapping[el] for el in active_squares]
+    return agg_pos + prim_pos
 
 def get_positions(per_layer_results, per_layer_activations, viz=False):
     import cv2
@@ -139,6 +141,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  layer_map: Dict[str, torch.nn.Module], 
                                  neuron_descriptions_full_path: str, 
                                  api_token_full_path: str, 
+                                 explanation_type: str,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
@@ -176,25 +179,43 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     positions = per_layer_positions[layer_name]
     results = per_layer_results[layer_name]
     for k, v in positions.items():
-        desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
+        if explanation_type == 'rigid':
+            desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
+        elif explanation_type == "soft":
+            desc_and_pos.append({'description' : results[k], 'positions' : v})
+        else:
+            raise ValueError("Wrong prompt type!")
     prompt += str(desc_and_pos)
+    
     with open(api_token_full_path, 'r') as f:
         token = f.readline().strip()
-    with open(os.path.join(prompt_dir_path, 'full_prompt.txt'), 'r') as f:
+    if explanation_type == "rigid":
+        prompt_file = "rigid_prompt.txt"
+    elif explanation_type == "soft":
+        prompt_file = "soft_prompt.txt"
+    with open(os.path.join(prompt_dir_path, prompt_file), 'r') as f:
         whole_prompt = f.readlines()
+        
     whole_prompt = ''.join(whole_prompt)
     full_prompt = f'{whole_prompt}PROMPT: "{prompt}"'
 
     # Run GPT API
     API_KEY = token
     openai.api_key = API_KEY
-    response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-            {"role": "user", "content": full_prompt},
-        ], 
-    temperature=gpt_temp
-    )
+    
+    while True:
+        try:
+            response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                    {"role": "user", "content": full_prompt},
+                ], 
+            temperature=gpt_temp
+            )
+            break
+        except openai.error.Timeout as e:
+            print("Caught an openai.error.Timeout exception! Reattempting API call.")
+            print(str(e))
     explanation = response["choices"][0]["message"]["content"]
 
     return probabilities.numpy(), prompt, explanation
