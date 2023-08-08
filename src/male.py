@@ -21,7 +21,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  api_token_full_path: str, 
                                  explanation_type: str,
                                  dataset_class_names: str,
-                                 noise_intensity: float,
+                                 is_flip: bool,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
@@ -34,7 +34,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     probabilities, _, categories, input_batch, input_tensor = classify(filename=full_image_path, 
                                                                        model=model, 
                                                                        dataset_class_names=dataset_class_names, 
-                                                                       noise_intensity=noise_intensity)
+                                                                       is_flip=is_flip)
 
     # Resize and center the image
     image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))

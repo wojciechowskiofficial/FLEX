@@ -35,8 +35,8 @@ def Main(args):
     df = pd.read_csv(args.val_images_names_full_path, header=None)
     image_names = df.iloc[:,0].tolist()
     
-    for noise_intensity in [.1, .2, .3, .4, .5]:
-        variation = f"noise_int_{noise_intensity}"
+    for is_flip in [True, False]:
+        variation = f"noise_int_{is_flip}"
         # Explain
         for image_name in tqdm(image_names):
             full_image_path = os.path.join(args.val_set_parent_path, image_name)
@@ -49,7 +49,7 @@ def Main(args):
                                                                             neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                                             api_token_full_path=args.openai_api_token_full_path, 
                                                                             explanation_type=args.explanation_type, 
-                                                                            noise_intensity=noise_intensity)
+                                                                            is_flip=is_flip)
             if not os.path.exists(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], variation)): # [:-5] is for getting rid of ".JPEG"
                 os.makedirs(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], variation))
             save(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], variation, "probs.npy"), probabilities)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("--openai_api_token_full_path", default="/home/adamwsl/.gpt_api_token/token.txt")
     parser.add_argument("--cnn", default="resnet18")
     parser.add_argument("--dataset", default="imagenet")
-    parser.add_argument("--output_parent_path", default="./experiment_4_1_results")
+    parser.add_argument("--output_parent_path", default="./experiment_4_2_results")
     parser.add_argument("--explanation_type", default="soft")
     parser.add_argument("--do_not_copy_image", action="store_true", default=False)
     parser.add_argument("--dataset_class_names", default="./metadata/imagenet_classes.txt")
