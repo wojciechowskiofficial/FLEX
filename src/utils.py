@@ -1,9 +1,27 @@
 from torch import Tensor
+from PIL import Image
+from torchvision import transforms
+import os
+import torch
+import numpy as np
+
+
+class GaussianNoise:
+    def __init__(self, intensity=0.1):
+        self.intensity = intensity
+
+    def __call__(self, img):
+        np_img = np.array(img)
+        noise = np.random.normal(loc=0, scale=1, size=np_img.shape)
+        noisy_img = np_img + self.intensity * noise * 255
+        noisy_img = np.clip(noisy_img, 0, 255)
+        return Image.fromarray(np.uint8(noisy_img))
 
 def classify(filename: str, 
              model, 
-             dataset_class_names: str,
-             top_k=5,) -> Tensor:
+             dataset_class_names: str, 
+             noise_intensity: float,
+             top_k=5) -> Tensor:
     
     from PIL import Image
     from torchvision import transforms
@@ -16,6 +34,7 @@ def classify(filename: str,
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),  # Conversion to 3 channels
+        GaussianNoise(intensity=noise_intensity),
         transforms.ToTensor(),
         #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
