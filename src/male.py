@@ -87,7 +87,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     while True:
         try:
             response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                     {"role": "user", "content": full_prompt},
                 ], 
