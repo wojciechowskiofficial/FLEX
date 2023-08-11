@@ -24,7 +24,7 @@ def Main():
         explanation = f"There is {what} in the image {why}."
         if not os.path.exists(os.path.join(args.output_parent_path, args.dataset,  image_name[:-5])): # [:-5] is for getting rid of ".JPEG"
             os.makedirs(os.path.join(args.output_parent_path, args.dataset, image_name[:-5]))
-        with open(os.path.join(args.output_parent_path, args.dataset, image_name[:-5], "nlx_gpt_exp.txt"), "w") as f:
+        with open(os.path.join(args.output_parent_path, args.dataset, image_name[:-5], image_name[:-5] + "_nlx_gpt_exp.txt"), "w") as f:
             f.write(explanation)
         if not args.do_not_copy_image and not os.path.isfile(os.path.join(args.output_parent_path, args.dataset, image_name[:-5], image_name)):
             copy2(full_image_path, os.path.join(args.output_parent_path, args.dataset, image_name[:-5], image_name))
