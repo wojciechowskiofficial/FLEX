@@ -47,6 +47,7 @@ def Main(args):
                                                                           neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                                           api_token_full_path=args.openai_api_token_full_path, 
                                                                           explanation_type=args.explanation_type)
+
         if not os.path.exists(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5])): # [:-5] is for getting rid of ".JPEG"
             os.makedirs(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5]))
         save(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], "probs.npy"), probabilities)
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--openai_api_token_full_path", default="/home/adamwsl/.gpt_api_token/token.txt")
     parser.add_argument("--cnn", default="resnet18")
     parser.add_argument("--dataset", default="imagenet")
-    parser.add_argument("--output_parent_path", default="./basic_explanations")
+    parser.add_argument("--output_parent_path", default="./basic_explanations_gpt4")
     parser.add_argument("--explanation_type", default="soft")
     parser.add_argument("--do_not_copy_image", action="store_true", default=False)
     parser.add_argument("--dataset_class_names", default="./metadata/imagenet_classes.txt")

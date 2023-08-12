@@ -96,6 +96,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
             print("Caught an openai.error.Timeout exception! Reattempting API call.")
             print(str(e))
     explanation = response["choices"][0]["message"]["content"]
+    explanation = explanation[1:-1] # get rid of parentheses
 
     return probabilities.numpy(), prompt, explanation
 
