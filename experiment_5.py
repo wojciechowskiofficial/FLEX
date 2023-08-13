@@ -3,19 +3,35 @@ import os
 from readability import Readability
 
 
-EXPLANATIONS_PARENT_PATH = "./experiment_0_results/imagenet/resnet18"
-TYPE_OF_EXPLANATION = "ACCURATE"
-RESULTS_FILE_FULL_PATH = "./experiment_5_results/experiment_5_results" + "_" + TYPE_OF_EXPLANATION + ".csv"
+EXPLANATIONS_PARENT_PATH = "./various_method_explanations"
+RESULTS_FILE_PARENT = "./experiment_5_results_v2"
 
 
 def Main():
-    out = ""
+    male_out, sat_out, nlx_out = "", "", ""
+    
     for explanation_path in os.listdir(EXPLANATIONS_PARENT_PATH):
-        with open(os.path.join(EXPLANATIONS_PARENT_PATH, explanation_path, "explanation.txt"), "r") as f:
+        with open(os.path.join(EXPLANATIONS_PARENT_PATH, explanation_path, explanation_path + ".JPEG_male_soft_gpt4_explanation.txt"), "r") as f:
             explanation = f.readline()
-        out += f"{explanation} "
-    r = Readability(out)
-    with open(RESULTS_FILE_FULL_PATH, "w") as f:
+        male_out += f"{explanation} "
+    r = Readability(male_out)
+    with open(os.path.join(RESULTS_FILE_PARENT, "experiment_5_results_male.csv"), "w") as f:
+        write_results(f, r)
+        
+    for explanation_path in os.listdir(EXPLANATIONS_PARENT_PATH):
+        with open(os.path.join(EXPLANATIONS_PARENT_PATH, explanation_path,  explanation_path + ".JPEG_nlx-gpt_explanation.txt"), "r") as f:
+            explanation = f.readline()
+        nlx_out += f"{explanation} "
+    r = Readability(nlx_out)
+    with open(os.path.join(RESULTS_FILE_PARENT, "experiment_5_results_nlx.csv"), "w") as f:
+        write_results(f, r)
+        
+    for explanation_path in os.listdir(EXPLANATIONS_PARENT_PATH):
+        with open(os.path.join(EXPLANATIONS_PARENT_PATH, explanation_path,  explanation_path + ".JPEG_showattendtell_explanation.txt"), "r") as f:
+            explanation = f.readline()
+        sat_out += f"{explanation} "
+    r = Readability(sat_out)
+    with open(os.path.join(RESULTS_FILE_PARENT, "experiment_5_results_sat.csv"), "w") as f:
         write_results(f, r)
 
 

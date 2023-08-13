@@ -1,0 +1,10 @@
+name,score,grade-level
+flesch-kincaid,5.208202859387274,5
+flesch,83.83535882168107,['6']
+gunning-fog,6.96926357685258,7
+coleman_liau,5.414338832155018,5
+dalle-chall,6.184467159570568,['7', '8']
+ARI,4.753239591516106,['5']
+linesear-write,6.966,7
+smog,6.42735559955562,6
+spache,4.330543651217596,4
