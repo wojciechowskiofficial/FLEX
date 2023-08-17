@@ -35,7 +35,7 @@ def Main(args):
     df = pd.read_csv(args.val_images_names_full_path, header=None)
     image_names = df.iloc[:,0].tolist()
     
-    for noise_intensity in [.1, .2, .3, .4, .5]:
+    for noise_intensity in [.2]:
         variation = f"noise_int_{noise_intensity}"
         # Explain
         for image_name in tqdm(image_names):
