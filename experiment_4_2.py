@@ -36,7 +36,7 @@ def Main(args):
     image_names = df.iloc[:,0].tolist()
     
     for is_flip in [True, False]:
-        variation = f"noise_int_{is_flip}"
+        variation = f"is_flip_{is_flip}"
         # Explain
         for image_name in tqdm(image_names):
             full_image_path = os.path.join(args.val_set_parent_path, image_name)
