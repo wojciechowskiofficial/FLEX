@@ -1,2 +1,2 @@
-# MALE (Multiple Abstraction Level Explanations)
-Providing explanations for image classification in natural language on multiple abstraction levels
+# Towards faithful and plausible natural language explanations for image classification: a pipeline approach
+Providing explanations for image classification in natural language.
