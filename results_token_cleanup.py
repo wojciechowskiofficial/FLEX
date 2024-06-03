@@ -9,7 +9,7 @@ def process_content(content):
     return cleaned_content
 
 # Path to the directory where you want to search for .txt files
-directory_path = 'experiment_1_results'
+directory_path = 'occlusion_study_sat_results'
 
 # Use glob to find all paths ending with .txt in the specified directory and all its subdirectories
 txt_files = glob.glob(f'{directory_path}/**/*.txt', recursive=True)

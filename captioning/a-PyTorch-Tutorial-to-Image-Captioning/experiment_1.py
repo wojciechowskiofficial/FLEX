@@ -6,13 +6,14 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from typing import Tuple
+import shutil
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 WORD_MAP_PATH = "/home/adamwsl/MALE/captioning/a-PyTorch-Tutorial-to-Image-Captioning/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json"
 MODEL_PATH = "/home/adamwsl/MALE/captioning/a-PyTorch-Tutorial-to-Image-Captioning/BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar"
 VAL_SET_PATH = "./val"
-OUTPUT_DIR = './experiment_1_results'
+OUTPUT_DIR = './occlusion_study_sat_results'
 
 def process_single_image(img_path: str) -> Tuple[str, plt.figure]:
      # Load model
@@ -40,8 +41,8 @@ def process_single_image(img_path: str) -> Tuple[str, plt.figure]:
 
 def Main():
     # Load CSV file
-    df = pd.read_csv("val_paths_experiments_0.csv", header=None)
-    partial_image_paths = df[0].str.split(",", n=1, expand=True)[0].tolist()
+    with open("occlusion_study_pathnames.txt", "r") as f:
+        partial_image_paths = [p.strip() for p in f.readlines()]
     
     # Start 
     for partial_image_path in partial_image_paths:

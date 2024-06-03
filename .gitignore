@@ -131,3 +131,13 @@ val
 experiment_0_results
 ./home/adamwsl/MALE/.vscode/launch.json
 basic_explanations
+human_evaluation_images
+occlusion_study
+basic_explanations_gpt4
+experiment_0_results
+experiment_1_results
+occlusion_study_sat
+occlusion_study_sat_results
+/home/adamwsl/MALE/captioning/a-PyTorch-Tutorial-to-Image-Captioning/BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar
+/home/adamwsl/MALE/captioning/a-PyTorch-Tutorial-to-Image-Captioning/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json
+/home/adamwsl/MALE/.vscode/launch.json
