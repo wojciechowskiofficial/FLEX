@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 
 def Main(args):
-    # Prepare for processing 
+    # prepare for processing 
     if args.cnn == "resnet18":
         from torchvision.models import resnet18
         last_layer_name = "layer4"
@@ -32,36 +32,23 @@ def Main(args):
                      'conv4' : model.features[8], 
                      'conv5' : model.features[10]}
     
-    df = pd.read_csv(args.val_images_names_full_path, header=None)
-    image_names = df.iloc[:,0].tolist()
+    image_names = os.listdir("/home/adamwsl/MALE/various_method_explanations")
+    image_names = [os.path.join("/home/adamwsl/MALE/various_method_explanations", x, x + ".JPEG") for x in image_names]
     
-    # Explain
+    # explain
     for image_name in tqdm(image_names):
         full_image_path = os.path.join(args.val_set_parent_path, image_name)
         
-        probabilities, prompt, explanation = run_pipeline_single_decision(model=model, 
-                                                                          full_image_path=full_image_path, 
-                                                                          layer_name=last_layer_name, 
-                                                                          layer_map=layer_map, 
-                                                                          dataset_class_names=args.dataset_class_names,
-                                                                          neuron_descriptions_full_path=args.milan_descriptions_full_path, 
-                                                                          api_token_full_path=args.openai_api_token_full_path, 
-                                                                          explanation_type=args.explanation_type)
-
-        if not os.path.exists(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5])): # [:-5] is for getting rid of ".JPEG"
-            os.makedirs(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5]))
-        save(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], "probs.npy"), probabilities)
-        with open(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], "prompt.txt"), "w") as f:
-            f.write(prompt)
-        if args.explanation_type == "rigid":
-            explanation_file_name = "rigid_explanation.txt"
-        elif args.explanation_type == "soft":
-            explanation_file_name = "soft_explanation.txt"
-        with open(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], explanation_file_name), "w") as f:
-            f.write(explanation)
-        if not args.do_not_copy_image and not os.path.isfile(os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], image_name)):
-            copy2(full_image_path, os.path.join(args.output_parent_path, args.dataset, args.cnn, image_name[:-5], image_name))
-
+        probabilities  = run_pipeline_single_decision(model=model, 
+                                                      full_image_path=full_image_path, 
+                                                      layer_name=last_layer_name, 
+                                                      layer_map=layer_map, 
+                                                      dataset_class_names=args.dataset_class_names,
+                                                      neuron_descriptions_full_path=args.milan_descriptions_full_path, 
+                                                      api_token_full_path=args.openai_api_token_full_path, 
+                                                      explanation_type=args.explanation_type)
+                   
+        save(os.path.join(os.path.dirname(image_name), "probs.npy"), probabilities)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description='Run pipeline on whole validation set')
