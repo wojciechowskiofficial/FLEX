@@ -134,3 +134,6 @@ experiment_0_results
 basic_explanations
 basic_explanations/*
 .vscode
+occlusion_nlx_gpt_results
+occlusion_study_sat_results
+various_method_explanations

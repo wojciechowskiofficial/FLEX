@@ -34,71 +34,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                                                        model=model, 
                                                                        dataset_class_names=dataset_class_names)
 
-    # Resize and center the image
-    image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))
-
-    # Find most important neurons 
-    descriptions = pd.read_csv(neuron_descriptions_full_path)
-    per_layer_results, per_layer_activations = get_important_neurons(how_much_highest=top_neuron_count, 
-                                                                    input_batch=input_batch, 
-                                                                    model=model, 
-                                                                    layer_names=[layer_name], 
-                                                                    layer_map=layer_map, 
-                                                                    descriptions=descriptions, 
-                                                                    probabilities=probabilities)
-
-    # Find neuron spatial whereabouts
-    per_layer_positions = get_positions(per_layer_results, 
-                                        per_layer_activations, 
-                                        viz=False)
-
-    # Construct the prompt
-    prompt = f'{str(categories[0])}, '
-    desc_and_pos = []
-    positions = per_layer_positions[layer_name]
-    results = per_layer_results[layer_name]
-    for k, v in positions.items():
-        if explanation_type == 'rigid':
-            desc_and_pos.append({'description' : results[k], 'positions' : v, 'id' : k})
-        elif explanation_type == "soft":
-            desc_and_pos.append({'description' : results[k], 'positions' : v})
-        else:
-            raise ValueError("Wrong prompt type!")
-    prompt += str(desc_and_pos)
-    
-    with open(api_token_full_path, 'r') as f:
-        token = f.readline().strip()
-    if explanation_type == "rigid":
-        prompt_file = "rigid_prompt.txt"
-    elif explanation_type == "soft":
-        prompt_file = "soft_prompt.txt"
-    with open(os.path.join(prompt_dir_path, prompt_file), 'r') as f:
-        whole_prompt = f.readlines()
-        
-    whole_prompt = ''.join(whole_prompt)
-    full_prompt = f'{whole_prompt}PROMPT: "{prompt}"'
-
-    # Run GPT API
-    API_KEY = token
-    openai.api_key = API_KEY
-    
-    while True:
-        try:
-            response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                    {"role": "user", "content": full_prompt},
-                ], 
-            temperature=gpt_temp
-            )
-            break
-        except openai.error.Timeout as e:
-            print("Caught an openai.error.Timeout exception! Reattempting API call.")
-            print(str(e))
-    explanation = response["choices"][0]["message"]["content"]
-    explanation = explanation[1:-1] # get rid of parentheses
-
-    return probabilities.numpy(), prompt, explanation
+    return probabilities.numpy() 
 
 
 def get_important_neurons(how_much_highest, 

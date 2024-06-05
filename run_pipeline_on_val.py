@@ -2,7 +2,7 @@ from src.male import run_pipeline_single_decision
 import os
 import pandas as pd
 from tqdm import tqdm
-from numpy import save
+from numpy import save, argmax, mean, std
 from shutil import copy2
 from argparse import ArgumentParser
 
@@ -32,12 +32,13 @@ def Main(args):
                      'conv4' : model.features[8], 
                      'conv5' : model.features[10]}
     
-    image_names = os.listdir("/home/adamwsl/MALE/various_method_explanations")
-    image_names = [os.path.join("/home/adamwsl/MALE/various_method_explanations", x, x + ".JPEG") for x in image_names]
+    image_names = os.listdir("/home/adamwsl/MALE/occlusion_nlx_gpt_results")
     
     # explain
+    counter = 0
+    avg = []
     for image_name in tqdm(image_names):
-        full_image_path = os.path.join(args.val_set_parent_path, image_name)
+        full_image_path = os.path.join("/home/adamwsl/MALE/occlusion_nlx_gpt_results", image_name, image_name + "_x.jpg")
         
         probabilities  = run_pipeline_single_decision(model=model, 
                                                       full_image_path=full_image_path, 
@@ -47,9 +48,24 @@ def Main(args):
                                                       neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                       api_token_full_path=args.openai_api_token_full_path, 
                                                       explanation_type=args.explanation_type)
-                   
-        save(os.path.join(os.path.dirname(image_name), "probs.npy"), probabilities)
-
+        
+        full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", image_name, image_name + ".JPEG")
+        probabilities_altered  = run_pipeline_single_decision(model=model, 
+                                                      full_image_path=full_image_path, 
+                                                      layer_name=last_layer_name, 
+                                                      layer_map=layer_map, 
+                                                      dataset_class_names=args.dataset_class_names,
+                                                      neuron_descriptions_full_path=args.milan_descriptions_full_path, 
+                                                      api_token_full_path=args.openai_api_token_full_path, 
+                                                      explanation_type=args.explanation_type)
+        
+        if argmax(probabilities) != argmax(probabilities_altered):
+            counter += 1
+        id = argmax(probabilities_altered)
+        avg += [probabilities_altered[id] - probabilities[id]]
+    print(counter, mean(avg), std(avg))
+       
+        
 if __name__ == "__main__":
     parser = ArgumentParser(description='Run pipeline on whole validation set')
     parser.add_argument("--val_set_parent_path", default="./val")
