@@ -5,6 +5,7 @@ from tqdm import tqdm
 from numpy import save, argmax, mean, std
 from shutil import copy2
 from argparse import ArgumentParser
+from torch import ones_like
 
 
 def Main(args):
@@ -31,14 +32,18 @@ def Main(args):
                      'conv3' : model.features[6], 
                      'conv4' : model.features[8], 
                      'conv5' : model.features[10]}
+        
+    df = pd.read_csv("masking.tsv", sep="\t")
     
-    image_names = os.listdir("/home/adamwsl/MALE/occlusion_nlx_gpt_results")
     
     # explain
     counter = 0
     avg = []
-    for image_name in tqdm(image_names):
-        full_image_path = os.path.join("/home/adamwsl/MALE/occlusion_nlx_gpt_results", image_name, image_name + "_x.jpg")
+    for _, row in tqdm(df.iterrows()):
+        sat = eval(row["SAT"])
+        full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", 
+                                       row["image"], 
+                                       row["image"] + ".JPEG")
         
         probabilities  = run_pipeline_single_decision(model=model, 
                                                       full_image_path=full_image_path, 
@@ -47,10 +52,11 @@ def Main(args):
                                                       dataset_class_names=args.dataset_class_names,
                                                       neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                       api_token_full_path=args.openai_api_token_full_path, 
-                                                      explanation_type=args.explanation_type)
-        
+                                                      explanation_type=args.explanation_type, 
+                                                      neuron_ids=sat)
+        '''
         full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", image_name, image_name + ".JPEG")
-        probabilities_altered  = run_pipeline_single_decision(model=model, 
+        probabilities_altered = run_pipeline_single_decision(model=model, 
                                                       full_image_path=full_image_path, 
                                                       layer_name=last_layer_name, 
                                                       layer_map=layer_map, 
@@ -64,6 +70,7 @@ def Main(args):
         id = argmax(probabilities_altered)
         avg += [probabilities_altered[id] - probabilities[id]]
     print(counter, mean(avg), std(avg))
+       '''
        
         
 if __name__ == "__main__":

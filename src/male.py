@@ -23,7 +23,8 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  dataset_class_names: str,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
-                                 gpt_temp: int = 0.1) -> Tuple[np.ndarray, str, str]:
+                                 gpt_temp: int = 0.1, 
+                                 neuron_ids: tuple = tuple()) -> Tuple[np.ndarray, str, str]:
 
     # Check if the CNN is in the eval mode
     if model.training:
@@ -33,6 +34,20 @@ def run_pipeline_single_decision(model: torch.nn.Module,
     probabilities, _, categories, input_batch, input_tensor = classify(filename=full_image_path, 
                                                                        model=model, 
                                                                        dataset_class_names=dataset_class_names)
+    
+     # Resize and center the image
+    image_center_resized = np.transpose(input_tensor.numpy(), (1, 2, 0))
+
+    # Find most important neurons 
+    descriptions = pd.read_csv(neuron_descriptions_full_path)
+    adjusted_neurons = get_important_neurons(how_much_highest=512, 
+                                                                    input_batch=input_batch, 
+                                                                    model=model, 
+                                                                    layer_names=[layer_name], 
+                                                                    layer_map=layer_map, 
+                                                                    descriptions=descriptions, 
+                                                                    probabilities=probabilities, 
+                                                                    neuron_ids=neuron_ids)
 
     return probabilities.numpy() 
 
@@ -43,7 +58,8 @@ def get_important_neurons(how_much_highest,
                           layer_names, 
                           layer_map, 
                           descriptions, 
-                          probabilities):
+                          probabilities, 
+                          neuron_ids):
 
     
     per_layer_results = {layer_name: {} for layer_name in layer_names}
@@ -57,16 +73,14 @@ def get_important_neurons(how_much_highest,
         sorted_ids = argsort(amax(attribution_lrp, dim=(2, 3)), descending=True).squeeze_(0)
         query = descriptions[descriptions['layer'] == layer_name]
         highest_activations_query = query.iloc[sorted_ids][:how_much_highest]    
+        pd.set_option('display.max_rows', None)
+        print(highest_activations_query)
 
-        attribution_activations = LayerActivation(model, layer_map[layer_name]).attribute(input_batch)
-
-        for _, r in highest_activations_query.iterrows():
-            name = r['description']
-            viz = attribution_activations[0, r['unit'], ...].numpy()
-            per_layer_results[layer_name][r['unit']] = name
-            per_layer_activations[layer_name][r['unit']] = viz
-
-    return per_layer_results, per_layer_activations
+        neuron_descriptions = [highest_activations_query[highest_activations_query["unit"] == neuron_id]["description"].iat[0] for neuron_id in neuron_ids]
+        adjusted_neurons = [highest_activations_query[highest_activations_query["description"] == desc]["unit"].iloc[0] for desc in neuron_descriptions]
+            
+            
+        return adjusted_neurons
 
 
 def _get_position(matrix):
