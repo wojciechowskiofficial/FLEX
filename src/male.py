@@ -11,6 +11,8 @@ import openai
 from src.utils import *
 from warnings import filterwarnings # for captum
 filterwarnings("ignore")
+from pprint import pprint
+
 
 
 def apply_mask(output, neuron_ids):
@@ -38,6 +40,7 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                  api_token_full_path: str, 
                                  explanation_type: str,
                                  dataset_class_names: str,
+                                 top_n_neurons: int,
                                  prompt_dir_path: str = "./prompts",
                                  top_neuron_count: int = 10, 
                                  gpt_temp: int = 0.1, 
@@ -64,7 +67,8 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                                                     layer_map=layer_map, 
                                                                     descriptions=descriptions, 
                                                                     probabilities=probabilities, 
-                                                                    neuron_ids=neuron_ids)
+                                                                    neuron_ids=neuron_ids, 
+                                                                    top_n_neurons=top_n_neurons)
     
     hook = model.layer4[1].bn2.register_forward_hook(lambda module, input, output: forward_hook(module, input, output, neuron_ids_to_mask=adjusted_neurons))
     
@@ -92,7 +96,8 @@ def get_important_neurons(how_much_highest,
                           layer_map, 
                           descriptions, 
                           probabilities, 
-                          neuron_ids):
+                          neuron_ids, 
+                          top_n_neurons):
 
     
     per_layer_results = {layer_name: {} for layer_name in layer_names}
@@ -107,11 +112,14 @@ def get_important_neurons(how_much_highest,
         query = descriptions[descriptions['layer'] == layer_name]
         highest_activations_query = query.iloc[sorted_ids][:how_much_highest]    
         pd.set_option('display.max_rows', None)
+        pprint(highest_activations_query)
         neuron_descriptions = [highest_activations_query[highest_activations_query["unit"] == neuron_id]["description"].iat[0] for neuron_id in neuron_ids]
         adjusted_neurons = [highest_activations_query[highest_activations_query["description"] == desc]["unit"].iloc[0] for desc in neuron_descriptions]
+        
+        adjusted_neurons_top_n = [value for value in highest_activations_query["unit"].tolist() if value in adjusted_neurons][:top_n_neurons]
             
             
-        return adjusted_neurons
+        return adjusted_neurons_top_n
 
 
 def _get_position(matrix):

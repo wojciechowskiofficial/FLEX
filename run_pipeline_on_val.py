@@ -39,8 +39,9 @@ def Main(args):
     # explain
     counter = 0
     avg = []
+    top_n_neurons = 2
     for _, row in tqdm(df.iterrows()):
-        sat = eval(row["MALE"])
+        sat = eval(row["NLX"])
         if type(sat) is not tuple:
             sat = (sat,)
         full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", 
@@ -55,7 +56,8 @@ def Main(args):
                                                       neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                       api_token_full_path=args.openai_api_token_full_path, 
                                                       explanation_type=args.explanation_type, 
-                                                      neuron_ids=sat))
+                                                      neuron_ids=sat, 
+                                                      top_n_neurons=top_n_neurons))
         if avg[-1] != 0:
             counter +=1 
         '''
