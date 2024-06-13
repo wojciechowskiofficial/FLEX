@@ -40,12 +40,14 @@ def Main(args):
     counter = 0
     avg = []
     for _, row in tqdm(df.iterrows()):
-        sat = eval(row["SAT"])
+        sat = eval(row["MALE"])
+        if type(sat) is not tuple:
+            sat = (sat,)
         full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", 
                                        row["image"], 
                                        row["image"] + ".JPEG")
         
-        probabilities  = run_pipeline_single_decision(model=model, 
+        avg.append(run_pipeline_single_decision(model=model, 
                                                       full_image_path=full_image_path, 
                                                       layer_name=last_layer_name, 
                                                       layer_map=layer_map, 
@@ -53,7 +55,9 @@ def Main(args):
                                                       neuron_descriptions_full_path=args.milan_descriptions_full_path, 
                                                       api_token_full_path=args.openai_api_token_full_path, 
                                                       explanation_type=args.explanation_type, 
-                                                      neuron_ids=sat)
+                                                      neuron_ids=sat))
+        if avg[-1] != 0:
+            counter +=1 
         '''
         full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", image_name, image_name + ".JPEG")
         probabilities_altered = run_pipeline_single_decision(model=model, 
@@ -71,6 +75,7 @@ def Main(args):
         avg += [probabilities_altered[id] - probabilities[id]]
     print(counter, mean(avg), std(avg))
        '''
+    print("my", counter, mean(list(filter(lambda x: x != 0, avg))), std(list(filter(lambda x: x != 0, avg))))
        
         
 if __name__ == "__main__":

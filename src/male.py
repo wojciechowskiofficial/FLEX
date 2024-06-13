@@ -13,6 +13,23 @@ from warnings import filterwarnings # for captum
 filterwarnings("ignore")
 
 
+def apply_mask(output, neuron_ids):
+    # Create a mask with ones
+    mask = torch.ones_like(output)
+
+    # Set the specified neurons to zero
+    for neuron_id in neuron_ids:
+        mask[:, neuron_id, :, :] = 0
+
+    # Apply the mask
+    output = output * mask
+    return output
+
+# Define a forward hook for the intermediate layer (conv2 in this case)
+def forward_hook(module, input, output, neuron_ids_to_mask):
+    return apply_mask(output, neuron_ids_to_mask)
+
+
 def run_pipeline_single_decision(model: torch.nn.Module, 
                                  full_image_path: str, 
                                  layer_name: str,
@@ -48,8 +65,24 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                                                     descriptions=descriptions, 
                                                                     probabilities=probabilities, 
                                                                     neuron_ids=neuron_ids)
-
-    return probabilities.numpy() 
+    
+    hook = model.layer4[1].bn2.register_forward_hook(lambda module, input, output: forward_hook(module, input, output, neuron_ids_to_mask=adjusted_neurons))
+    
+    # Classify
+    probabilities2, _, _, _, _ = classify(filename=full_image_path, 
+                                                                       model=model, 
+                                                                       dataset_class_names=dataset_class_names)
+    
+    hook.remove()
+    
+    #probabilities = probabilities.numpy()
+    #probabilities2 = probabilities2.numpy()
+    
+    if argmax(probabilities) != argmax(probabilities2):
+        id = argmax(probabilities)
+        return probabilities[id] - probabilities2[id]
+    else:
+        return 0
 
 
 def get_important_neurons(how_much_highest, 
@@ -74,8 +107,6 @@ def get_important_neurons(how_much_highest,
         query = descriptions[descriptions['layer'] == layer_name]
         highest_activations_query = query.iloc[sorted_ids][:how_much_highest]    
         pd.set_option('display.max_rows', None)
-        print(highest_activations_query)
-
         neuron_descriptions = [highest_activations_query[highest_activations_query["unit"] == neuron_id]["description"].iat[0] for neuron_id in neuron_ids]
         adjusted_neurons = [highest_activations_query[highest_activations_query["description"] == desc]["unit"].iloc[0] for desc in neuron_descriptions]
             
