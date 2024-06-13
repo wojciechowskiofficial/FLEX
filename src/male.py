@@ -78,15 +78,17 @@ def run_pipeline_single_decision(model: torch.nn.Module,
                                                                        dataset_class_names=dataset_class_names)
     
     hook.remove()
-    
-    #probabilities = probabilities.numpy()
-    #probabilities2 = probabilities2.numpy()
-    
+
     if argmax(probabilities) != argmax(probabilities2):
-        id = argmax(probabilities)
-        return probabilities[id] - probabilities2[id]
+        is_class_changed =  True
     else:
-        return 0
+        is_class_changed =  False
+        
+    id = argmax(probabilities)
+    prob_diff =  probabilities[id] - probabilities2[id]
+    
+    return is_class_changed, prob_diff
+    
 
 
 def get_important_neurons(how_much_highest, 
@@ -112,7 +114,6 @@ def get_important_neurons(how_much_highest,
         query = descriptions[descriptions['layer'] == layer_name]
         highest_activations_query = query.iloc[sorted_ids][:how_much_highest]    
         pd.set_option('display.max_rows', None)
-        pprint(highest_activations_query)
         neuron_descriptions = [highest_activations_query[highest_activations_query["unit"] == neuron_id]["description"].iat[0] for neuron_id in neuron_ids]
         adjusted_neurons = [highest_activations_query[highest_activations_query["description"] == desc]["unit"].iloc[0] for desc in neuron_descriptions]
         

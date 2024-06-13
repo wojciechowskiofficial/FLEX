@@ -38,46 +38,30 @@ def Main(args):
     
     # explain
     counter = 0
-    avg = []
-    top_n_neurons = 2
+    avg, is_class_changed_list = [], []
+    top_n_neurons = 5
     for _, row in tqdm(df.iterrows()):
-        sat = eval(row["NLX"])
+        sat = eval(row["SAT"])
         if type(sat) is not tuple:
             sat = (sat,)
         full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", 
                                        row["image"], 
                                        row["image"] + ".JPEG")
         
-        avg.append(run_pipeline_single_decision(model=model, 
-                                                      full_image_path=full_image_path, 
-                                                      layer_name=last_layer_name, 
-                                                      layer_map=layer_map, 
-                                                      dataset_class_names=args.dataset_class_names,
-                                                      neuron_descriptions_full_path=args.milan_descriptions_full_path, 
-                                                      api_token_full_path=args.openai_api_token_full_path, 
-                                                      explanation_type=args.explanation_type, 
-                                                      neuron_ids=sat, 
-                                                      top_n_neurons=top_n_neurons))
-        if avg[-1] != 0:
-            counter +=1 
-        '''
-        full_image_path = os.path.join("/home/adamwsl/MALE/various_method_explanations", image_name, image_name + ".JPEG")
-        probabilities_altered = run_pipeline_single_decision(model=model, 
-                                                      full_image_path=full_image_path, 
-                                                      layer_name=last_layer_name, 
-                                                      layer_map=layer_map, 
-                                                      dataset_class_names=args.dataset_class_names,
-                                                      neuron_descriptions_full_path=args.milan_descriptions_full_path, 
-                                                      api_token_full_path=args.openai_api_token_full_path, 
-                                                      explanation_type=args.explanation_type)
-        
-        if argmax(probabilities) != argmax(probabilities_altered):
-            counter += 1
-        id = argmax(probabilities_altered)
-        avg += [probabilities_altered[id] - probabilities[id]]
-    print(counter, mean(avg), std(avg))
-       '''
-    print("my", counter, mean(list(filter(lambda x: x != 0, avg))), std(list(filter(lambda x: x != 0, avg))))
+        is_class_changed, prob_diff = run_pipeline_single_decision(model=model, 
+                                                                   full_image_path=full_image_path, 
+                                                                   layer_name=last_layer_name, 
+                                                                   layer_map=layer_map, 
+                                                                   dataset_class_names=args.dataset_class_names,
+                                                                   neuron_descriptions_full_path=args.milan_descriptions_full_path, 
+                                                                   api_token_full_path=args.openai_api_token_full_path, 
+                                                                   explanation_type=args.explanation_type, 
+                                                                   neuron_ids=sat, 
+                                                                   top_n_neurons=top_n_neurons)
+        avg.append(prob_diff)
+        counter += int(is_class_changed)
+       
+    print("my", counter, mean(avg), std(avg))
        
         
 if __name__ == "__main__":
