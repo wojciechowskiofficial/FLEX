@@ -32,13 +32,16 @@ def Main(args):
                      'conv4' : model.features[8], 
                      'conv5' : model.features[10]}
     
-    image_names = os.listdir("/home/adamwsl/MALE/occlusion_nlx_gpt_results")
+    
+    algo = "occlusion_nlx_gpt_results"
+    
+    image_names = os.listdir("/home/adamwsl/MALE/occlusion_study_results_all_3/" + algo)
     
     # explain
     counter = 0
     avg = []
     for image_name in tqdm(image_names):
-        full_image_path = os.path.join("/home/adamwsl/MALE/occlusion_nlx_gpt_results", image_name, image_name + "_x.jpg")
+        full_image_path = os.path.join("/home/adamwsl/MALE/occlusion_study_results_all_3/" + algo, image_name, image_name + "masked_negated.jpg")
         
         probabilities  = run_pipeline_single_decision(model=model, 
                                                       full_image_path=full_image_path, 
@@ -59,7 +62,7 @@ def Main(args):
                                                       api_token_full_path=args.openai_api_token_full_path, 
                                                       explanation_type=args.explanation_type)
         
-        if argmax(probabilities) != argmax(probabilities_altered):
+        if argmax(probabilities) == argmax(probabilities_altered):
             counter += 1
         id = argmax(probabilities_altered)
         avg += [probabilities_altered[id] - probabilities[id]]
